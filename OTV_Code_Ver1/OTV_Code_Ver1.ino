@@ -19,8 +19,12 @@ void setup() {
     float distanceToObstacle = 0.3;
     boolean startedTop = false; 
 
+    // Enes100.begin("STAMP Out!", FIRE, 3, 1116, 8, 9);
+    // Tank.begin();
 
-    // setup
+
+    // setup motor pins
+    
     // Right motor pins
     pinMode(RIGHT_MOTOR_ENABLE, OUTPUT);
     pinMode(RIGHT_MOTOR_IN1, OUTPUT);
@@ -30,17 +34,19 @@ void setup() {
     pinMode(LEFT_MOTOR_ENABLE, OUTPUT);
     pinMode(LEFT_MOTOR_IN1, OUTPUT);
     pinMode(LEFT_MOTOR_IN2, OUTPUT);
+    
+    // arm servo
+    pinMode(SERVO_PWM,OUTPUT);
 
-    // driveForward();
-    // don't drive
+    // turn right - for MS5 turning test
     turnRight();
+    
     // servo testing:
     // setServo(127);
 
     
 
-    // Enes100.begin("STAMP Out!", FIRE, 3, 1116, 8, 9);
-    // Tank.begin();
+ 
 
 
 
@@ -122,10 +128,22 @@ void setup() {
     
 }
 
+// loop function
+void loop() {
+        delay(100);
+        // setServo(0);
+        // delay(1000);
+        // setServo(127);
+        // delay(1000);
+}
+
+
+// Servo for the arm
 void setServo(int pwm){
     analogWrite(SERVO_PWM,pwm);
 }
 
+// do the limbo
 void limbo(){
           // drive to line with limbo
         driveToPoint(3,1.5,0);
@@ -135,43 +153,8 @@ void limbo(){
         Enes100.println("done!");
 }
 
-void driveToPoint(float x, float y, float theta){
-    // Calculate the angle to turn to
-  float deltaX = x - Enes100.getX();
-  float deltaY = y - Enes100.getY();
-  float deltaTheta = atan2(deltaY,deltaX);
-  float thetaError = 0.1;
-  
-  
-  // turn to that angle
-  turnAngle(deltaTheta);
-  
-  // drive until we are close enough to that point.
-  driveForward();
-  while(dist(Enes100.getX(),x,Enes100.getY(),y) > 0.1){
-      // adjust heading if needed, if we veer to a side.
-      if(abs(Enes100.getTheta() - deltaTheta) > thetaError){
-          deltaX = x - Enes100.getX();
-          deltaY = y - Enes100.getY();
-          deltaTheta = atan2(deltaY,deltaX);
-          turnAngle(deltaTheta);
-      }
-      
-      delay(1);
-  }
-  
-  stopDriving();
-  
-  // Get the heading to the requested one
-  turnAngle(theta);
-  
-    
-}
 
-float dist(float x0, float x1, float y0, float y1){
-  return sqrt(pow(x0 - x1, 2) + pow(y0 - y1, 2));
-}
-
+// function to turn to a specific given angle
 void turnAngle(float angle){
 
   Enes100.print("Turning to angle");
@@ -205,6 +188,48 @@ void turnAngle(float angle){
     stopDriving();
     
 }
+
+// helper function for distance between points
+float dist(float x0, float x1, float y0, float y1){
+  return sqrt(pow(x0 - x1, 2) + pow(y0 - y1, 2));
+}
+
+// drive to a specific given point
+void driveToPoint(float x, float y, float theta){
+    // Calculate the angle to turn to
+  float deltaX = x - Enes100.getX();
+  float deltaY = y - Enes100.getY();
+  float deltaTheta = atan2(deltaY,deltaX);
+  float thetaError = 0.1;
+  
+  
+  // turn to that angle
+  turnAngle(deltaTheta);
+  
+  // drive until we are close enough to that point.
+  driveForward();
+  while(dist(Enes100.getX(),x,Enes100.getY(),y) > 0.1){
+      // adjust heading if needed, if we veer to a side.
+      if(abs(Enes100.getTheta() - deltaTheta) > thetaError){
+          deltaX = x - Enes100.getX();
+          deltaY = y - Enes100.getY();
+          deltaTheta = atan2(deltaY,deltaX);
+          turnAngle(deltaTheta);
+      }
+      
+      delay(1);
+  }
+  
+  stopDriving();
+  
+  // Get the heading to the requested one
+  turnAngle(theta);
+  
+    
+}
+
+
+// Driving functions
 
 void setLeftMotorPWM(int leftMotor){
     // Backwards
@@ -257,26 +282,17 @@ void driveForward(){
         setRightMotorPWM(255);
 }
 
-
 void driveBackward(){
-        setLeftMotorPWM(-127);
-        setRightMotorPWM(-127);
+        setLeftMotorPWM(-255);
+        setRightMotorPWM(-255);
 }
-// turns are slow so we can be accurate. this will need real life adjusting.
+// tune turning speed based on how the vision system behaves.
 void turnLeft(){
-        setLeftMotorPWM(-33);
-        setRightMotorPWM(33);
+        setLeftMotorPWM(-255);
+        setRightMotorPWM(255);
 }
 
 void turnRight(){
-        setLeftMotorPWM(255);
-        setRightMotorPWM(-255);
-}
-
-
-void loop() {
-        // setServo(0);
-        // delay(1000);
-        // setServo(127);
-        // delay(1000);
+        setLeftMotorPWM(-255);
+        setRightMotorPWM(255);
 }
