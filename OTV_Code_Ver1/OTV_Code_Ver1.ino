@@ -54,6 +54,7 @@ void setup() {
 //   delay(10000);
 //   setServo(ARM_DOWN);
     turnAngle(1.57);
+    // turnRight();
 //
    
 
@@ -180,7 +181,7 @@ void turnAngle(float angle) {
 
 
   // Angle tolerance. Will need tuning.
-  float delta = 0.1;
+  float delta = 0.2;
 
   // if we are within error, don't move
   if (abs(Enes100.getTheta() - angle) < delta) {
@@ -306,11 +307,11 @@ void driveBackward() {
 }
 // tune turning speed based on how the vision system behaves.
 void turnLeft() {
-  setLeftMotorPWM(-100);
-  setRightMotorPWM(100);
+  setLeftMotorPWM(-110);
+  setRightMotorPWM(110);
 }
 
 void turnRight() {
-  setLeftMotorPWM(-100);
-  setRightMotorPWM(100);
+  setLeftMotorPWM(110);
+  setRightMotorPWM(-110);
 }
