@@ -15,6 +15,9 @@ const int SERVO_PWM = 3;
 const int ARM_UP = 200;
 const int ARM_DOWN = 150;
 
+// Huskylens T - 9
+// Huskylens R - 10
+
 // Arm up - 200
 // arm down - 150
 
