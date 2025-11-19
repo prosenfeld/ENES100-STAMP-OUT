@@ -1,6 +1,18 @@
 #include <Enes100.h>
 #include <math.h>
 
+
+#include <Wire.h>
+#include <Adafruit_AMG88xx.h>
+
+Adafruit_AMG88xx amg;
+
+float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
+float heatmap[8][8];
+// this gets updated dynicammly for ambient; but putting a theoretical value to start.
+float threshold = 40;
+
+
 const int RIGHT_MOTOR_ENABLE = 5;   // D5 (PWM)
 const int LEFT_MOTOR_ENABLE  = 6;   // D6 (PWM)
 
@@ -15,9 +27,6 @@ const int SERVO_PWM = 3;
 const int ARM_UP = 200;
 const int ARM_DOWN = 150;
 
-// Huskylens T - 9
-// Huskylens R - 10
-
 // Arm up - 200
 // arm down - 150
 
@@ -25,11 +34,31 @@ const int ARM_DOWN = 150;
 
 void setup() {
 
+    // setup ENES100 library
+  Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
+
+  // initialize the IR sensor
+
+  Serial.begin(9600);
+    Serial.println(F("AMG88xx pixels"));
+
+    bool status;
+    
+    // default settings
+    status = amg.begin();
+    if (!status) {
+        Serial.println("Could not find a valid AMG88xx sensor, check wiring!");
+        while (1);
+    }
+    
+    Serial.println("-- Pixels Test --");
+
+    Serial.println();
+
+    delay(100); // let sensor boot up
+
   float distanceToObstacle = 0.3;
   boolean startedTop = false;
-
-  Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
-  // Tank.begin();
 
 
   // setup motor pins
@@ -318,3 +347,71 @@ void turnRight() {
   setLeftMotorPWM(110);
   setRightMotorPWM(-110);
 }
+
+// Functions for IR sensor
+
+// Count how many corners are above our threshold
+int countCorners() {
+  int count = 0;
+
+  // top-left region A4:C6  → rows 2–4, cols 0–2
+  if (regionHasValueAbove(heatmap, 2, 4, 0, 2, threshold)) count++;
+
+  // top-right region F4:H6 → rows 2–4, cols 5–7
+  if (regionHasValueAbove(heatmap, 2, 4, 5, 7, threshold)) count++;
+
+  // bottom-left region A8:C9 → rows 6–7, cols 0–2
+  if (regionHasValueAbove(heatmap, 6, 7, 0, 2, threshold)) count++;
+
+  // bottom-right region F8:H9 → rows 6–7, cols 5–7
+  if (regionHasValueAbove(heatmap, 6, 7, 5, 7, threshold)) count++;
+
+  return count;
+}
+
+// average the top two rows and add 8 to adjust the threshold for ambient.
+float computeThreshold(float arr[8][8]) {
+    float sum = 0;
+    int count = 0;
+
+    for (int r = 0; r < 2; r++) {        // first two rows: 0 and 1
+        for (int c = 0; c < 8; c++) {
+            sum += arr[r][c];
+            count++;
+        }
+    }
+
+    return sum / count + 8;
+}
+
+// check for values above the threshold
+bool regionHasValueAbove(float arr[8][8], int r1, int r2, int c1, int c2, float th) {
+  for (int r = r1; r <= r2; r++) {
+    for (int c = c1; c <= c2; c++) {
+      if (arr[r][c] > th) return true;
+    }
+  }
+  return false;
+}
+
+// array of length 64 -> 8x8 matrix 
+void arrayToMatrix8x8(float inArray[64], float outMatrix[8][8]) {
+    int index = 0;
+    for (int r = 0; r < 8; r++) {
+        for (int c = 0; c < 8; c++) {
+            outMatrix[r][c] = inArray[index++];
+        }
+    }
+}
+
+int numFlames(){
+
+    amg.readPixels(pixels);
+    // convert that data to a matrix
+    arrayToMatrix8x8(pixels,heatmap);
+    // dynamically adjust our threshold based on ambient based on the top of the frame
+    threshold = computeThreshold(heatmap);
+    return countCorners();
+    
+}
+
