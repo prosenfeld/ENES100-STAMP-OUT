@@ -1,18 +1,17 @@
 #include <Enes100.h>
 #include <math.h>
-
-
 #include <Wire.h>
 #include <Adafruit_AMG88xx.h>
 
 Adafruit_AMG88xx amg;
 
+//VARIABLE DECLARATIONS FOR IR SENSOR
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 float heatmap[8][8];
-// this gets updated dynicammly for ambient; but putting a theoretical value to start.
+// this gets updated dynamically for ambient; but putting a theoretical value to start.
 float threshold = 40;
 
-
+//VARIABLE DECLARATIONS FOR MOTOR PINS
 const int RIGHT_MOTOR_ENABLE = 5;   // D5 (PWM)
 const int LEFT_MOTOR_ENABLE  = 6;   // D6 (PWM)
 
@@ -24,8 +23,8 @@ const int LEFT_MOTOR_IN2  = 19;     // D19
 
 const int SERVO_PWM = 3;
 
-const int ARM_UP = 200;
-const int ARM_DOWN = 150;
+const int ARM_UP = 150;
+const int ARM_DOWN = 100;
 
 // Arm up - 200
 // arm down - 150
@@ -36,9 +35,10 @@ void setup() {
 
     // setup ENES100 library
   Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
+     setServo(ARM_UP);
 
+  /*
   // initialize the IR sensor
-
   Serial.begin(9600);
     Serial.println(F("AMG88xx pixels"));
 
@@ -56,6 +56,7 @@ void setup() {
     Serial.println();
 
     delay(100); // let sensor boot up
+  */
 
   float distanceToObstacle = 0.3;
   boolean startedTop = false;
@@ -80,108 +81,117 @@ void setup() {
   //  driveForward();
 
   // arm up
-   setServo(ARM_UP);
+  setServo(ARM_UP);
 
 //   driveForward();
 //   delay(10000);
 //   setServo(ARM_DOWN);
-    turnAngle(1.57);
+//    turnAngle(1.57);
     // turnRight();
 //
+
+
+  // handle initial position -> mission site
+    /*
+  if(Enes100.getY() < 1 && Enes100.getY() > 0){
+
+       // This will need tuning. Ultrasonic probably should be used.
+       /*
+       turnAngle(1.571);
+       while (Enes100.getY() < 1.31) {
+        driveForward();
+        delay(10);
+      }
+    
+      driveToPoint(0.27,1.31,1.571);
+
+   } else if (Enes100.getY() > 0){
+
+      /*turnAngle(-1.571);
+       while (Enes100.getY() > 0.69) {
+        driveForward();
+        delay(10);
+      }
+      stopDriving();
+      driveToPoint(0.27,0.69,-1.571);
+   }
+   */
    
 
+   //turnAngle(0);
+   // do mission things here
+   //delay(1000);
+
+    /*
+   // drive forward until we find an obstacle
+   while((Tank.readDistanceSensor(1) > distanceToObstacle || Tank.readDistanceSensor(1) == -1) && Enes100.getY() < 2.7 ){
+       driveForward();
+       delay(1);
+   }
+   stopDriving();
+   // edge case of just the rumble
+   if(Enes100.getX() > 3.6){
+
+       return;
+   } else if( Enes100.getX() > 2.7){
+       limbo();
+       return;
+   }
+
+   // turn  to try to find an opening
+   if(Enes100.getY() < 1){
+       // turnAngle(-1.571);
+       driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
+
+         // if we are open, move forward. if not, do that again.
+
+           if(Tank.readDistanceSensor(1) > 0.5){
+
+               driveToPoint(3,Enes100.getY(),0);
+
+           } else{
+               // move down another row
+               driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
+
+           }
+
+   } else{
+       // turnAngle(1.571)
+       driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
+       Enes100.println(Tank.readDistanceSensor(1));
+
+          if(Tank.readDistanceSensor(1) > 0.5 || Tank.readDistanceSensor(1) == -1){
+
+              driveToPoint(3,Enes100.getY(),0);
+
+           } else{
+               // move down another row
+               driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
+               // go forward
+               driveToPoint(3,Enes100.getY(),0);
 
 
 
 
+          }
 
-
-  // // handle initial position -> mission site
-  // if(Enes100.getY() < 1){
-
-  //     // This will need tuning. Ultrasonic probably should be used.
-
-  //      driveToPoint(0.55,1.55,1.571);
-  // } else {
-
-  //     driveToPoint(0.55,0.55,-1.571);
-  // }
-
-  // turnAngle(0);
-  // // do mission things here
-  // delay(1000);
-
-
-  // // drive forward until we find an obstacle
-  // while((Tank.readDistanceSensor(1) > distanceToObstacle || Tank.readDistanceSensor(1) == -1) && Enes100.getY() < 2.7 ){
-  //     driveForward();
-  //     delay(1);
-  // }
-  // stopDriving();
-  // // edge case of just the rumble
-  // if(Enes100.getX() > 3.6){
-
-  //     return;
-  // } else if( Enes100.getX() > 2.7){
-  //     limbo();
-  //     return;
-  // }
-
-  // // turn  to try to find an opening
-  // if(Enes100.getY() < 1){
-  //     // turnAngle(-1.571);
-  //     driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
-
-  //       // if we are open, move forward. if not, do that again.
-
-  //         if(Tank.readDistanceSensor(1) > 0.5){
-
-  //             driveToPoint(3,Enes100.getY(),0);
-
-  //         } else{
-  //             // move down another row
-  //             driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
-
-  //         }
-
-  // } else{
-  //     // turnAngle(1.571)
-  //     driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
-  //     Enes100.println(Tank.readDistanceSensor(1));
-
-  //        if(Tank.readDistanceSensor(1) > 0.5 || Tank.readDistanceSensor(1) == -1){
-
-  //             driveToPoint(3,Enes100.getY(),0);
-
-  //         } else{
-  //             // move down another row
-  //             driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
-  //             // go forward
-  //             driveToPoint(3,Enes100.getY(),0);
-
-
-
-
-  //         }
-
-  // }
-
-  // limbo();
-
-
-
+   }
+  */
+  driveToPoint(0.75, 0, 0);
+  driveToPoint(2.61, 0, 0);
+  limbo();
 
 }
 
 // loop function
 void loop() {
 
-//  Enes100.println("X");
-//  Enes100.println(Enes100.getX());
-//  Enes100.println("Y");
-//  Enes100.println(Enes100.getY());
-//  Enes100.println("Theta:");
-//  Enes100.println(Enes100.getTheta());
+  Enes100.println("X");
+  Enes100.println(Enes100.getX());
+  Enes100.println("Y");
+  Enes100.println(Enes100.getY());
+  Enes100.println("Theta:");
+  Enes100.println(Enes100.getTheta());
 
   delay(1000);
 
@@ -196,10 +206,16 @@ void setServo(int pwm) {
 
 // do the limbo
 void limbo() {
-  // drive to line with limbo
+  // drive to line with limbo, lower arm
   driveToPoint(3, 1.5, 0);
-  // go through limbo
-  driveToPoint(3.7, 1.5, 0);
+  setServo(ARM_DOWN);
+  // go through limbo, raise arm
+  while (Enes100.getX() < 3.7) {
+    driveForward();
+    delay(10);
+  }
+  stopDriving();
+  setServo(ARM_UP);
   // Done!
   Enes100.println("done!");
 }
@@ -207,23 +223,21 @@ void limbo() {
 
 // function to turn to a specific given angle
 void turnAngle(float angle) {
+  float diff = angleDiff(angle, Enes100.getTheta());
 
   Enes100.print("Turning to angle");
   Enes100.print(angle);
 
-
   // Angle tolerance. Will need tuning.
-  float delta = 0.2;
+  float delta = 0.1;
 
   // if we are within error, don't move
   if (abs(Enes100.getTheta() - angle) < delta) {
     return;
   }
 
-
-
   // Pick which way we are turning.
-  if (Enes100.getTheta() - angle < 0) {
+  if (diff < 0) {
     turnLeft();
   } else {
     turnRight();
@@ -240,6 +254,13 @@ void turnAngle(float angle) {
 
 }
 
+float angleDiff(float a, float b){
+  float  diff = fmod(a-b + M_PI, 2*M_PI);
+  if (diff < 0) 
+    diff += 2*M_PI;
+  return diff - M_PI;
+}
+
 // helper function for distance between points
 float dist(float x0, float x1, float y0, float y1) {
   return sqrt(pow(x0 - x1, 2) + pow(y0 - y1, 2));
@@ -251,7 +272,7 @@ void driveToPoint(float x, float y, float theta) {
   float deltaX = x - Enes100.getX();
   float deltaY = y - Enes100.getY();
   float deltaTheta = atan2(deltaY, deltaX);
-  float thetaError = 0.1;
+  float thetaError = 0.25;
 
 
   // turn to that angle
@@ -261,14 +282,16 @@ void driveToPoint(float x, float y, float theta) {
   driveForward();
   while (dist(Enes100.getX(), x, Enes100.getY(), y) > 0.1) {
     // adjust heading if needed, if we veer to a side.
+    
     if (abs(Enes100.getTheta() - deltaTheta) > thetaError) {
       deltaX = x - Enes100.getX();
       deltaY = y - Enes100.getY();
       deltaTheta = atan2(deltaY, deltaX);
       turnAngle(deltaTheta);
+      driveForward();
     }
-
-    delay(1);
+     delay(100);
+    
   }
 
   stopDriving();
@@ -348,7 +371,7 @@ void turnRight() {
   setRightMotorPWM(-110);
 }
 
-// Functions for IR sensor
+// FUNCTIONS FOR IR SENSOR
 
 // Count how many corners are above our threshold
 int countCorners() {
