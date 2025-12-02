@@ -2,8 +2,12 @@
 #include <math.h>
 #include <Wire.h>
 #include <Adafruit_AMG88xx.h>
+#include "HUSKYLENS.h"
+#include "SoftwareSerial.h"
 
 Adafruit_AMG88xx amg;
+HUSKYLENS huskylens;
+//HUSKYLENS green line >> SDA; blue line >> SCL
 
 //VARIABLE DECLARATIONS FOR IR SENSOR
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
@@ -37,7 +41,17 @@ void setup() {
   Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
      setServo(ARM_UP);
 
-  /*
+    //setup HuskyLens
+  Wire.begin();
+    while (!huskylens.begin(Wire))
+    {
+        Serial.println(F("Begin failed!"));
+        Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+        Serial.println(F("2.Please recheck the connection."));
+        delay(100);
+    }
+  
+  
   // initialize the IR sensor
   Serial.begin(9600);
     Serial.println(F("AMG88xx pixels"));
@@ -56,7 +70,7 @@ void setup() {
     Serial.println();
 
     delay(100); // let sensor boot up
-  */
+  
 
   float distanceToObstacle = 0.3;
   boolean startedTop = false;
@@ -77,18 +91,8 @@ void setup() {
   // arm servo
   pinMode(SERVO_PWM, OUTPUT);
 
-  // turn right - for MS5 turning test
-  //  driveForward();
-
   // arm up
   setServo(ARM_UP);
-
-//   driveForward();
-//   delay(10000);
-//   setServo(ARM_DOWN);
-//    turnAngle(1.57);
-    // turnRight();
-//
 
 
   // handle initial position -> mission site
@@ -116,11 +120,13 @@ void setup() {
       driveToPoint(0.27,0.69,-1.571);
    }
    */
-   
 
-   //turnAngle(0);
-   // do mission things here
-   //delay(1000);
+
+   turnAngle(0);
+   //do mission things here
+   topDirection();
+   //drive forward here
+   Enes100.mission(NUM_CANDLES, numFlames());
 
     /*
    // drive forward until we find an obstacle
@@ -438,3 +444,38 @@ int numFlames(){
     
 }
 
+void topDirection(){
+  if (!huskylens.request()) Serial.println(F("Fail to request data from HUSKYLENS, recheck the connection!"));
+    else if(!huskylens.isLearned()) Serial.println(F("Nothing learned, press learn button on HUSKYLENS to learn one!"));
+    else if(!huskylens.available()) Serial.println(F("No block or arrow appears on the screen!"));
+    else
+    {
+        Serial.println(F("###########"));
+        
+        while (huskylens.available())
+        {
+            delay(1000);
+            HUSKYLENSResult result = huskylens.read();
+            printTopResult(result);
+        }    
+    }
+}
+
+void printTopResult(HUSKYLENSResult result){
+    Serial.println(F("Topography direction: "));
+    if (result.ID == 1){
+        Serial.println(F("A"));
+        Enes100.mission(TOPOGRAPHY, TOP_A);
+    }
+    else if (result.ID == 2){
+        Serial.println(F("B"));
+        Enes100.mission(TOPOGRAPHY, TOP_B);
+    }
+    else if (result.ID == 3){
+        Serial.println(F("C"));
+        Enes100.mission(TOPOGRAPHY, TOP_C);
+    }
+    else{
+        Serial.println("Unknown!");
+    }
+}
