@@ -27,30 +27,26 @@ const int LEFT_MOTOR_IN2  = 19;     // D19
 
 const int SERVO_PWM = 3;
 
+//this can vary depending on what angle the arm gets attached; double check values are accurate before running full code
 const int ARM_UP = 150;
 const int ARM_DOWN = 100;
+const int TURN_SPEED = 110;
 
-// Arm up - 200
-// arm down - 150
-
-
+/*-----------------START OF MAIN CODE--------------------*/
 
 void setup() {
-
-    // setup ENES100 library
+  // setup ENES100 library
   Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
-     setServo(ARM_UP);
 
-    //setup HuskyLens
+  //setup HuskyLens
   Wire.begin();
-    while (!huskylens.begin(Wire))
-    {
-        Serial.println(F("Begin failed!"));
-        Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
-        Serial.println(F("2.Please recheck the connection."));
-        delay(100);
-    }
-  
+  while (!huskylens.begin(Wire))
+  {
+    Serial.println(F("Begin failed!"));
+      Serial.println(F("1.Please recheck the \"Protocol Type\" in HUSKYLENS (General Settings>>Protocol Type>>I2C)"));
+      Serial.println(F("2.Please recheck the connection."));
+      delay(100);
+  }
   
   // initialize the IR sensor
   Serial.begin(9600);
@@ -75,7 +71,6 @@ void setup() {
   float distanceToObstacle = 0.3;
   boolean startedTop = false;
 
-
   // setup motor pins
 
   // Right motor pins
@@ -94,100 +89,48 @@ void setup() {
   // arm up
   setServo(ARM_UP);
 
+  /*-----------------------END OF SETUP-------------------------*/
 
-  // handle initial position -> mission site
-    /*
+  // INITIAL POSITION -> MISSION SITE
+  
   if(Enes100.getY() < 1 && Enes100.getY() > 0){
-
-       // This will need tuning. Ultrasonic probably should be used.
-       /*
-       turnAngle(1.571);
-       while (Enes100.getY() < 1.31) {
-        driveForward();
-        delay(10);
-      }
+    // This will need tuning. Ultrasonic probably should be used.
+    turnAngle(1.571);
+    while (Enes100.getY() < 1.31) {
+      driveForward();
+      delay(1);
+    }
     
-      driveToPoint(0.27,1.31,1.571);
+    driveToPoint(0.27,1.31,1.571);
 
-   } else if (Enes100.getY() > 0){
-
-      /*turnAngle(-1.571);
-       while (Enes100.getY() > 0.69) {
+  } else if (Enes100.getY() > 0){
+    turnAngle(-1.571);
+      while (Enes100.getY() > 0.69) {
         driveForward();
-        delay(10);
+        delay(1);
       }
-      stopDriving();
-      driveToPoint(0.27,0.69,-1.571);
-   }
-   */
+    stopDriving();
+    driveToPoint(0.27,0.69,-1.571);
+  }
 
+  //turnAngle(0);
+  //do mission things here
+  topDirection();
+  //drive forward here
+  Enes100.mission(NUM_CANDLES, numFlames());
+  //additional mission things
 
-   turnAngle(0);
-   //do mission things here
-   topDirection();
-   //drive forward here
-   Enes100.mission(NUM_CANDLES, numFlames());
-
-    /*
-   // drive forward until we find an obstacle
-   while((Tank.readDistanceSensor(1) > distanceToObstacle || Tank.readDistanceSensor(1) == -1) && Enes100.getY() < 2.7 ){
-       driveForward();
-       delay(1);
-   }
-   stopDriving();
-   // edge case of just the rumble
-   if(Enes100.getX() > 3.6){
-
-       return;
-   } else if( Enes100.getX() > 2.7){
-       limbo();
-       return;
-   }
-
-   // turn  to try to find an opening
-   if(Enes100.getY() < 1){
-       // turnAngle(-1.571);
-       driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
-
-         // if we are open, move forward. if not, do that again.
-
-           if(Tank.readDistanceSensor(1) > 0.5){
-
-               driveToPoint(3,Enes100.getY(),0);
-
-           } else{
-               // move down another row
-               driveToPoint(Enes100.getX(),Enes100.getY() + 0.5,0);
-
-           }
-
-   } else{
-       // turnAngle(1.571)
-       driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
-       Enes100.println(Tank.readDistanceSensor(1));
-
-          if(Tank.readDistanceSensor(1) > 0.5 || Tank.readDistanceSensor(1) == -1){
-
-              driveToPoint(3,Enes100.getY(),0);
-
-           } else{
-               // move down another row
-               driveToPoint(Enes100.getX(),Enes100.getY() - 0.5,0);
-               // go forward
-               driveToPoint(3,Enes100.getY(),0);
-
-
-
-
-          }
-
-   }
-  */
+  //MISSION SITE -> END OF ARENA
   driveToPoint(0.75, 0, 0);
   driveToPoint(2.61, 0, 0);
+
+  //do limbo
   limbo();
 
 }
+
+/*------------------END OF MAIN CODE---------------------*/
+
 
 // loop function
 void loop() {
@@ -204,13 +147,12 @@ void loop() {
 
 }
 
-
 // Servo for the arm
 void setServo(int pwm) {
   analogWrite(SERVO_PWM, pwm);
 }
 
-// do the limbo
+// do the limbo LMBO
 void limbo() {
   // drive to line with limbo, lower arm
   driveToPoint(3, 1.5, 0);
@@ -227,7 +169,7 @@ void limbo() {
 }
 
 
-// function to turn to a specific given angle
+// function to turn to a specific given angle TANG
 void turnAngle(float angle) {
   float diff = angleDiff(angle, Enes100.getTheta());
 
@@ -272,7 +214,7 @@ float dist(float x0, float x1, float y0, float y1) {
   return sqrt(pow(x0 - x1, 2) + pow(y0 - y1, 2));
 }
 
-// drive to a specific given point
+// drive to a specific given point DTP
 void driveToPoint(float x, float y, float theta) {
   // Calculate the angle to turn to
   float deltaX = x - Enes100.getX();
@@ -314,14 +256,12 @@ void driveToPoint(float x, float y, float theta) {
 void setLeftMotorPWM(int leftMotor) {
   // Backwards
   if (leftMotor < 0) {
-
     digitalWrite(LEFT_MOTOR_IN1, HIGH);
     digitalWrite(LEFT_MOTOR_IN2, LOW);
     analogWrite(LEFT_MOTOR_ENABLE, abs(leftMotor));
   }
   // Forwards
   else {
-
     digitalWrite(LEFT_MOTOR_IN1, LOW);
     digitalWrite(LEFT_MOTOR_IN2, HIGH);
     analogWrite(LEFT_MOTOR_ENABLE, abs(leftMotor));
@@ -366,15 +306,16 @@ void driveBackward() {
   setLeftMotorPWM(-255);
   setRightMotorPWM(-255);
 }
+
 // tune turning speed based on how the vision system behaves.
 void turnLeft() {
-  setLeftMotorPWM(-110);
-  setRightMotorPWM(110);
+  setLeftMotorPWM(-TURN_SPEED);
+  setRightMotorPWM(TURN_SPEED);
 }
 
 void turnRight() {
-  setLeftMotorPWM(110);
-  setRightMotorPWM(-110);
+  setLeftMotorPWM(TURN_SPEED);
+  setRightMotorPWM(-TURN_SPEED);
 }
 
 // FUNCTIONS FOR IR SENSOR
@@ -400,17 +341,17 @@ int countCorners() {
 
 // average the top two rows and add 8 to adjust the threshold for ambient.
 float computeThreshold(float arr[8][8]) {
-    float sum = 0;
-    int count = 0;
+  float sum = 0;
+  int count = 0;
 
-    for (int r = 0; r < 2; r++) {        // first two rows: 0 and 1
-        for (int c = 0; c < 8; c++) {
-            sum += arr[r][c];
-            count++;
-        }
+  for (int r = 0; r < 2; r++) {        // first two rows: 0 and 1
+    for (int c = 0; c < 8; c++) {
+      sum += arr[r][c];
+      count++;
     }
+  }
 
-    return sum / count + 8;
+  return sum / count + 8;
 }
 
 // check for values above the threshold
@@ -425,23 +366,21 @@ bool regionHasValueAbove(float arr[8][8], int r1, int r2, int c1, int c2, float 
 
 // array of length 64 -> 8x8 matrix 
 void arrayToMatrix8x8(float inArray[64], float outMatrix[8][8]) {
-    int index = 0;
-    for (int r = 0; r < 8; r++) {
-        for (int c = 0; c < 8; c++) {
-            outMatrix[r][c] = inArray[index++];
-        }
+  int index = 0;
+  for (int r = 0; r < 8; r++) {
+    for (int c = 0; c < 8; c++) {
+      outMatrix[r][c] = inArray[index++];
     }
+  }
 }
 
 int numFlames(){
-
-    amg.readPixels(pixels);
-    // convert that data to a matrix
-    arrayToMatrix8x8(pixels,heatmap);
-    // dynamically adjust our threshold based on ambient based on the top of the frame
-    threshold = computeThreshold(heatmap);
-    return countCorners();
-    
+  amg.readPixels(pixels);
+  // convert that data to a matrix
+  arrayToMatrix8x8(pixels,heatmap);
+  // dynamically adjust our threshold based on ambient based on the top of the frame
+  threshold = computeThreshold(heatmap);
+  return countCorners();
 }
 
 void topDirection(){
@@ -450,32 +389,29 @@ void topDirection(){
     else if(!huskylens.available()) Serial.println(F("No block or arrow appears on the screen!"));
     else
     {
-        Serial.println(F("###########"));
+      Serial.println(F("###########"));
         
-        while (huskylens.available())
-        {
-            delay(1000);
-            HUSKYLENSResult result = huskylens.read();
-            printTopResult(result);
-        }    
+      while (huskylens.available())
+      {
+        delay(1000);
+        HUSKYLENSResult result = huskylens.read();
+        printTopResult(result);
+      }    
     }
 }
 
 void printTopResult(HUSKYLENSResult result){
-    Serial.println(F("Topography direction: "));
-    if (result.ID == 1){
-        Serial.println(F("A"));
-        Enes100.mission(TOPOGRAPHY, TOP_A);
-    }
-    else if (result.ID == 2){
-        Serial.println(F("B"));
-        Enes100.mission(TOPOGRAPHY, TOP_B);
-    }
-    else if (result.ID == 3){
-        Serial.println(F("C"));
-        Enes100.mission(TOPOGRAPHY, TOP_C);
-    }
-    else{
-        Serial.println("Unknown!");
-    }
+  Serial.println(F("Topography direction: "));
+  if (result.ID == 1){
+    Serial.println(F("A"));
+    Enes100.mission(TOPOGRAPHY, TOP_A);
+  } else if (result.ID == 2){
+    Serial.println(F("B"));
+    Enes100.mission(TOPOGRAPHY, TOP_B);
+  } else if (result.ID == 3){
+    Serial.println(F("C"));
+    Enes100.mission(TOPOGRAPHY, TOP_C);
+  } else{
+    Serial.println("Unknown!");
+  }
 }
