@@ -25,12 +25,20 @@ const int RIGHT_MOTOR_IN2 = 11;      // D3
 const int LEFT_MOTOR_IN1  = 18;     // D18
 const int LEFT_MOTOR_IN2  = 19;     // D19
 
+// Define the Trig and Echo pin connections for the ultrasonic sensor
+const int trigPin = 15;
+const int echoPin = 14;
+
+
+
 const int SERVO_PWM = 3;
 
 //this can vary depending on what angle the arm gets attached; double check values are accurate before running full code
 const int ARM_UP = 150;
 const int ARM_DOWN = 100;
 const int TURN_SPEED = 110;
+
+
 
 /*-----------------START OF MAIN CODE--------------------*/
 
@@ -85,6 +93,10 @@ void setup() {
 
   // arm servo
   pinMode(SERVO_PWM, OUTPUT);
+
+  // Ultrasonic Sensor
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
 
   // arm up
   setServo(ARM_UP);
@@ -414,4 +426,34 @@ void printTopResult(HUSKYLENSResult result){
   } else{
     Serial.println("Unknown!");
   }
+}
+
+int getUltrasonicDistance(){
+
+  // Define variables to store duration and distance
+  long duration;
+  int distance;
+
+    // Clear the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  // Sets the trigPin HIGH for 10 microseconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+
+  // Calculating the distance
+  distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+
+  // Displays the distance on the Serial Monitor
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+  
+  return distance;
+
 }
