@@ -22,13 +22,14 @@ const int LEFT_MOTOR_ENABLE  = 6;   // D6 (PWM)
 const int RIGHT_MOTOR_IN1 = 13;     // D11
 const int RIGHT_MOTOR_IN2 = 11;      // D3
 
-const int LEFT_MOTOR_IN1  = 18;     // D18
-const int LEFT_MOTOR_IN2  = 19;     // D19
+const int LEFT_MOTOR_IN1  = 16;     // D18
+const int LEFT_MOTOR_IN2  = 17;     // D19
 
 // Define the Trig and Echo pin connections for the ultrasonic sensor
 const int trigPin = 15;
 const int echoPin = 14;
 
+// magic number for putting out flames is a distance of 4
 
 
 const int SERVO_PWM = 3;
@@ -36,15 +37,13 @@ const int SERVO_PWM = 3;
 //this can vary depending on what angle the arm gets attached; double check values are accurate before running full code
 const int ARM_UP = 150;
 const int ARM_DOWN = 100;
-const int TURN_SPEED = 110;
+const int TURN_SPEED = 80;
 
 
 
 /*-----------------START OF MAIN CODE--------------------*/
 
 void setup() {
-  // setup ENES100 library
-  Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
 
   //setup HuskyLens
   Wire.begin();
@@ -101,43 +100,69 @@ void setup() {
   // arm up
   setServo(ARM_UP);
 
+  // setup ENES100 library
+  Enes100.begin("STAMP Out!", FIRE, 24, 1116, 4, 2);
+
+
   /*-----------------------END OF SETUP-------------------------*/
 
   // INITIAL POSITION -> MISSION SITE
-  
-  if(Enes100.getY() < 1 && Enes100.getY() > 0){
-    // This will need tuning. Ultrasonic probably should be used.
-    turnAngle(1.571);
-    while (Enes100.getY() < 1.31) {
-      driveForward();
-      delay(1);
-    }
+
+//   if(Enes100.getY() < 1){
+//     // This will need tuning. Ultrasonic probably should be used.
+//     // turnAngle(1.571);
+//     // while (Enes100.getY() < 1.31) {
+//     //   driveForward();
+//     //   delay(1);
+//     // }
     
-    driveToPoint(0.27,1.31,1.571);
+//     driveToPoint(0.25,1.1,1.571);
 
-  } else if (Enes100.getY() > 0){
-    turnAngle(-1.571);
-      while (Enes100.getY() > 0.69) {
-        driveForward();
-        delay(1);
-      }
-    stopDriving();
-    driveToPoint(0.27,0.69,-1.571);
-  }
+//   } else if (Enes100.getY() > 0){
+//     // turnAngle(-1.571);
+//     //   while (Enes100.getY() > 0.69) {
+//     //     driveForward();
+//     //     delay(1);
+//     //   }
+//     // stopDriving();
 
-  //turnAngle(0);
-  //do mission things here
-  topDirection();
-  //drive forward here
-  Enes100.mission(NUM_CANDLES, numFlames());
+//     driveToPoint(0.27,0.5,-1.571);
+//   }
+
+//   //do mission things here
+//   topDirection();
+//   delay(1000);
+
+//   while(getUltrasonicDistance() > 12){
+//     driveForward();
+//   }
+//   stopDriving();
+
+//   delay(1000);
+
+//   //drive forward here
+//   Enes100.mission(NUM_CANDLES, numFlames()+1);
+
+//  while(getUltrasonicDistance() >= 4){
+//     driveForwardSlow();
+//   }
+//   stopDriving();
+
+//   delay(1000);
+//   setServo(ARM_DOWN);
+//   delay(2000);
+//   setServo(ARM_UP);
+
+
   //additional mission things
 
   //MISSION SITE -> END OF ARENA
-  driveToPoint(0.75, 0, 0);
+  delay(1000);
+  driveToPoint(0.7, -0.04, 0);
   driveToPoint(2.61, 0, 0);
 
   //do limbo
-  limbo();
+  // limbo();
 
 }
 
@@ -153,6 +178,7 @@ void loop() {
   Enes100.println(Enes100.getY());
   Enes100.println("Theta:");
   Enes100.println(Enes100.getTheta());
+  // Serial.println(getUltrasonicDistance());
 
   delay(1000);
 
@@ -191,22 +217,29 @@ void turnAngle(float angle) {
   // Angle tolerance. Will need tuning.
   float delta = 0.1;
 
-  // if we are within error, don't move
-  if (abs(Enes100.getTheta() - angle) < delta) {
-    return;
-  }
-
-  // Pick which way we are turning.
-  if (diff < 0) {
-    turnLeft();
-  } else {
-    turnRight();
-  }
-  // Turn until we are within tolerance.
   while (abs(Enes100.getTheta() - angle) > delta) {
-    delay(1);
+     // Pick which way we are turning.
+    if (diff < 0) {
+      turnRight();
+    } else {
+      turnLeft();
+    }
+    delay(300);
+    stopDriving();
+    delay(500);
 
   }
+  // // if we are within error, don't move
+  // if (abs(Enes100.getTheta() - angle) < delta) {
+  //   return;
+  // }
+
+ 
+  // // Turn until we are within tolerance.
+  // while (abs(Enes100.getTheta() - angle) > delta) {
+  //   delay(1);
+
+  // }
 
   Enes100.println("done!");
   Enes100.println(abs(Enes100.getTheta() - angle));
@@ -243,14 +276,14 @@ void driveToPoint(float x, float y, float theta) {
   while (dist(Enes100.getX(), x, Enes100.getY(), y) > 0.1) {
     // adjust heading if needed, if we veer to a side.
     
-    if (abs(Enes100.getTheta() - deltaTheta) > thetaError) {
-      deltaX = x - Enes100.getX();
-      deltaY = y - Enes100.getY();
-      deltaTheta = atan2(deltaY, deltaX);
-      turnAngle(deltaTheta);
-      driveForward();
-    }
-     delay(100);
+    // if (abs(Enes100.getTheta() - deltaTheta) > thetaError) {
+    //   deltaX = x - Enes100.getX();
+    //   deltaY = y - Enes100.getY();
+    //   deltaTheta = atan2(deltaY, deltaX);
+    //   turnAngle(deltaTheta);
+    //   driveForward();
+    // }
+    delay(1);
     
   }
 
@@ -312,6 +345,11 @@ void stopDriving() {
 void driveForward() {
   setLeftMotorPWM(255);
   setRightMotorPWM(255);
+}
+
+void driveForwardSlow() {
+  setLeftMotorPWM(110);
+  setRightMotorPWM(110);
 }
 
 void driveBackward() {
