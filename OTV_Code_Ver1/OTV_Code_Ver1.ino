@@ -155,6 +155,20 @@ void setup() {
   delay(1000);
   setServo(ARM_DOWN);
   delay(2000);
+
+  // wiggle to have better chances of hitting the flames
+  turnLeft();
+  delay(1000);
+  stopDriving();
+  delay(1000);
+  turnRight();
+  delay(2000);
+  stopDriving();
+  delay(100);
+
+  
+  
+  // arm up
   setServo(ARM_UP);
 
 
