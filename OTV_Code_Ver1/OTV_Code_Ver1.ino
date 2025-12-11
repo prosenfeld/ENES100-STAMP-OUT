@@ -106,60 +106,64 @@ void setup() {
 
   /*-----------------------END OF SETUP-------------------------*/
 
-  // INITIAL POSITION -> MISSION SITE
+//   // INITIAL POSITION -> MISSION SITE
 
-//   if(Enes100.getY() < 1){
-//     // This will need tuning. Ultrasonic probably should be used.
-//     // turnAngle(1.571);
-//     // while (Enes100.getY() < 1.31) {
-//     //   driveForward();
-//     //   delay(1);
-//     // }
-    
-//     driveToPoint(0.25,1.1,1.571);
+  // // turnAngle(1.571);
 
-//   } else if (Enes100.getY() > 0){
-//     // turnAngle(-1.571);
-//     //   while (Enes100.getY() > 0.69) {
-//     //     driveForward();
-//     //     delay(1);
-//     //   }
-//     // stopDriving();
+  if(Enes100.getY() < 1){
+    // This will need tuning. Ultrasonic probably should be used.
+    // turnAngle(1.571);
+    // while (Enes100.getY() < 1.31) {
+    //   driveForward();
+    //   delay(1);
+    // }
 
-//     driveToPoint(0.27,0.5,-1.571);
-//   }
+    turnAngle(1.54);
+    driveToPoint(0.25,1,1.54);
 
-//   //do mission things here
-//   topDirection();
-//   delay(1000);
+  } else if (Enes100.getY() > 0){
+    // turnAngle(-1.571);
+    //   while (Enes100.getY() > 0.69) {
+    //     driveForward();
+    //     delay(1);
+    //   }
+    // stopDriving();
+    turnAngle(-1.54);
 
-//   while(getUltrasonicDistance() > 12){
-//     driveForward();
-//   }
-//   stopDriving();
+    driveToPoint(0.27,0.5,-1.54);
+  }
 
-//   delay(1000);
+  //do mission things here
+  topDirection();
+  delay(1000);
 
-//   //drive forward here
-//   Enes100.mission(NUM_CANDLES, numFlames()+1);
+  while(getUltrasonicDistance() > 10){
+    driveForward();
+  }
+  stopDriving();
 
-//  while(getUltrasonicDistance() >= 4){
-//     driveForwardSlow();
-//   }
-//   stopDriving();
+  delay(1000);
 
-//   delay(1000);
-//   setServo(ARM_DOWN);
-//   delay(2000);
-//   setServo(ARM_UP);
+  //drive forward here
+  Enes100.mission(NUM_CANDLES, numFlames()+1);
+
+ while(getUltrasonicDistance() >= 4){
+    driveForwardSlow();
+  }
+  stopDriving();
+
+  delay(1000);
+  setServo(ARM_DOWN);
+  delay(2000);
+  setServo(ARM_UP);
 
 
   //additional mission things
 
   //MISSION SITE -> END OF ARENA
-  delay(1000);
-  driveToPoint(0.7, -0.04, 0);
-  driveToPoint(2.61, 0, 0);
+  // delay(1000);
+  // driveToPoint(0.7, -0.04, 0);
+  // driveToPoint(2.61, 0, 0);
 
   //do limbo
   // limbo();
@@ -172,13 +176,14 @@ void setup() {
 // loop function
 void loop() {
 
-  Enes100.println("X");
-  Enes100.println(Enes100.getX());
-  Enes100.println("Y");
-  Enes100.println(Enes100.getY());
-  Enes100.println("Theta:");
-  Enes100.println(Enes100.getTheta());
-  // Serial.println(getUltrasonicDistance());
+  // Enes100.println("X");
+  // Enes100.println(Enes100.getX());
+  // Enes100.println("Y");
+  // Enes100.println(Enes100.getY());
+  // Enes100.println("Theta:");
+  // Enes100.println(Enes100.getTheta());
+  Serial.println("Distance:");
+  Serial.println(getUltrasonicDistance());
 
   delay(1000);
 
@@ -188,6 +193,32 @@ void loop() {
 // Servo for the arm
 void setServo(int pwm) {
   analogWrite(SERVO_PWM, pwm);
+}
+
+// moving the servo slower by looping and waiting
+void moveServoSlow(int start, int end){
+
+  int current = start;
+  // make sure we are assuming we started in the right place
+  analogWrite(SERVO_PWM, start);
+  // up vs down 
+  if (start > end){
+
+    while(current > end ){
+      current -=10;
+      analogWrite(SERVO_PWM,current);
+      delay(50);
+    }
+
+  } else{
+
+    while(current < end ){
+      current +=10;
+      analogWrite(SERVO_PWM,current);
+      delay(50);
+    }
+
+  }
 }
 
 // do the limbo LMBO
@@ -215,7 +246,7 @@ void turnAngle(float angle) {
   Enes100.print(angle);
 
   // Angle tolerance. Will need tuning.
-  float delta = 0.1;
+  float delta = 0.05;
 
   while (abs(Enes100.getTheta() - angle) > delta) {
      // Pick which way we are turning.
@@ -224,7 +255,7 @@ void turnAngle(float angle) {
     } else {
       turnLeft();
     }
-    delay(300);
+    delay(200);
     stopDriving();
     delay(500);
 
@@ -260,7 +291,7 @@ float dist(float x0, float x1, float y0, float y1) {
 }
 
 // drive to a specific given point DTP
-void driveToPoint(float x, float y, float theta) {
+int driveToPoint(float x, float y, float theta) {
   // Calculate the angle to turn to
   float deltaX = x - Enes100.getX();
   float deltaY = y - Enes100.getY();
@@ -269,7 +300,11 @@ void driveToPoint(float x, float y, float theta) {
 
 
   // turn to that angle
-  turnAngle(deltaTheta);
+  // turnAngle(deltaTheta);
+
+  unsigned long startTime = millis();     // start timer
+  unsigned long timeout = 10000;          // 10 seconds
+
 
   // drive until we are close enough to that point.
   driveForward();
@@ -283,6 +318,14 @@ void driveToPoint(float x, float y, float theta) {
     //   turnAngle(deltaTheta);
     //   driveForward();
     // }
+
+        // check timeout
+      if (millis() - startTime >= timeout) {
+         stopDriving();      // stop the robot
+         return 0;           // indicate failure (timeout)
+      }
+
+
     delay(1);
     
   }
@@ -292,6 +335,7 @@ void driveToPoint(float x, float y, float theta) {
   // Get the heading to the requested one
   turnAngle(theta);
 
+  return 1;  // indicate success
 
 }
 
